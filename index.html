@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cumberland Smash • Lake Cumberland's Favorite Smashburgers</title>
+  <meta name="description" content="Smashburgers done right on Lake Cumberland. Fresh, crispy-edge smashburgers, loaded fries, hot dogs, and hand-spun milkshakes. Proudly serving Monticello, Wayne County, and the Lake Cumberland shoreline.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
+    
+    :root {
+      --red: #9F1239;
+      --amber: #F59E0B;
+    }
+    
+    .tail-container {
+      max-width: 1280px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .brand-red { color: #9F1239; }
+    .bg-brand-red { background-color: #9F1239; }
+    .hover\:bg-brand-red:hover { background-color: #7F1D1D; }
+    
+    .section-header {
+      font-family: 'Playfair Display', Georgia, serif;
+      letter-spacing: -0.025em;
+    }
+
+    .food-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+    .food-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .nav-link {
+      transition: color 0.1s ease;
+    }
+    .nav-link:hover {
+      color: #9F1239;
+    }
+
+    .menu-tab {
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .menu-tab.active {
+      color: #9F1239;
+      font-weight: 600;
+    }
+    .menu-tab.active:after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: #9F1239;
+      border-radius: 3px;
+    }
+
+    .smash-btn {
+      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .smash-btn:active {
+      transform: scale(0.985);
+    }
+
+    .cart-drawer {
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .menu-item-img {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .food-card:hover .menu-item-img {
+      transform: scale(1.04);
+    }
+
+    .lake-bg {
+      background-image: linear-gradient(rgba(17, 24, 39, 0.65), rgba(17, 24, 39, 0.55));
+    }
+
+    .nav-scrolled {
+      background-color: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+    }
+
+    .toast {
+      animation: slideUp 0.3s ease forwards;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .stat-number {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .location-card {
+      transition: all 0.2s ease;
+    }
+    .location-card.active {
+      border-color: #9F1239;
+      box-shadow: 0 0 0 3px rgba(159, 18, 57, 0.1);
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .price-tag {
+      font-feature-settings: "tnum";
+    }
+
+    .cumberland-divider {
+      background: linear-gradient(to right, transparent, #9F1239, transparent);
+      height: 1px;
+      opacity: 0.15;
+    }
+
+    /* Testimonials polish */
+    .testimonial-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 0.2s ease;
+    }
+    .testimonial-card:hover {
+      border-color: #f3e8d8;
+    }
+
+    /* Mobile floating CTA safe spacing */
+    @media (max-width: 767px) {
+      #contact {
+        padding-bottom: 5.75rem;
+      }
+      #about {
+        padding-bottom: 5.75rem;
+      }
+    }
+
+    /* Premium button & card micro interactions */
+    .smash-btn {
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+    .smash-btn:hover {
+      box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.1), 0 2px 6px -2px rgb(0 0 0 / 0.1);
+    }
+    .food-card {
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.03), 0 1px 2px -1px rgb(0 0 0 / 0.03);
+    }
+
+    /* Subtle lakeside warmth accent for testimonial header area (no heavy image) */
+    #testimonials h2 {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Smooth anchor offset for sticky nav */
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 82px;
+    }
+
+    /* Extra premium hover lift on food cards */
+    .food-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 10px 10px -5px rgb(0 0 0 / 0.06);
+    }
+  </style>
+</head>
+<body class="bg-[#FFFBEB] text-[#111827] font-sans overflow-x-hidden">
+  <!-- NAV -->
+  <nav id="nav" class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="flex items-center justify-between h-20">
+        <!-- Logo -->
+        <div class="flex items-center gap-x-3">
+          <div class="w-11 h-11 bg-[#9F1239] rounded-2xl flex items-center justify-center shadow-inner">
+            <span class="text-white text-3xl font-black tracking-tighter" style="font-family: 'Playfair Display', Georgia, serif;">CS</span>
+          </div>
+          <div>
+            <div class="font-black text-2xl tracking-[-1.5px] leading-none">Cumberland Smash</div>
+            <div class="text-[10px] text-gray-500 font-medium tracking-[1px] -mt-0.5">LAKE CUMBERLAND • KENTUCKY</div>
+          </div>
+        </div>
+
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex items-center gap-x-9 text-sm font-medium">
+          <a href="#menu" class="nav-link text-gray-700 hover:text-[#9F1239]">Menu</a>
+          <a href="#location" class="nav-link text-gray-700 hover:text-[#9F1239]">Today's Location</a>
+          <a href="#catering" class="nav-link text-gray-700 hover:text-[#9F1239]">Catering</a>
+          <a href="#testimonials" class="nav-link text-gray-700 hover:text-[#9F1239]">Stories</a>
+          <a href="#about" class="nav-link text-gray-700 hover:text-[#9F1239]">About</a>
+          <a href="#contact" class="nav-link text-gray-700 hover:text-[#9F1239]">Contact</a>
+        </div>
+
+        <!-- Right side actions -->
+        <div class="flex items-center gap-x-3">
+          <!-- Open status -->
+          <div class="hidden sm:flex items-center gap-x-2 bg-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-3xl">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span>OPEN TODAY</span>
+          </div>
+
+          <!-- Cart Button -->
+          <button onclick="toggleCart()" 
+                  class="flex items-center gap-x-2 bg-white border border-gray-200 hover:border-gray-300 px-4 h-11 rounded-3xl text-sm font-semibold transition-all active:scale-[0.985]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="font-semibold">Cart</span>
+            <span id="cart-count" 
+                  class="inline-flex items-center justify-center bg-[#9F1239] text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1.5 rounded-full">0</span>
+          </button>
+
+          <!-- Mobile menu -->
+          <button id="mobile-menu-btn" class="md:hidden w-11 h-11 flex items-center justify-center border border-gray-200 rounded-2xl" onclick="toggleMobileMenu()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-t bg-white px-5 py-4">
+      <div class="flex flex-col text-base font-medium gap-y-1">
+        <a href="#menu" onclick="toggleMobileMenu()" class="py-3 px-1 nav-link text-gray-700">Menu</a>
+        <a href="#location" onclick="toggleMobileMenu()" class="py-3 px-1 nav-link text-gray-700">Today's Location</a>
+        <a href="#catering" onclick="toggleMobileMenu()" class="py-3 px-1 nav-link text-gray-700">Catering</a>
+        <a href="#testimonials" onclick="toggleMobileMenu()" class="py-3 px-1 nav-link text-gray-700">Stories</a>
+        <a href="#about" onclick="toggleMobileMenu()" class="py-3 px-1 nav-link text-gray-700">About</a>
+        <a href="#contact" onclick="toggleMobileMenu()" class="py-3 px-1 nav-link text-gray-700">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="relative h-[100dvh] min-h-[620px] flex items-center justify-center bg-[#111827] overflow-hidden">
+    <img src="assets/images/hero-smashburger.jpg" alt="Perfect smashburger with crispy edges and melted cheese on Lake Cumberland" 
+         class="absolute inset-0 w-full h-full object-cover">
+    
+    <div class="lake-bg absolute inset-0"></div>
+    
+    <div class="relative z-10 max-w-5xl mx-auto px-6 text-center pt-8">
+      <div class="inline-flex items-center gap-x-2 bg-white/95 backdrop-blur text-[#9F1239] text-xs font-bold tracking-[1.5px] px-4 h-8 rounded-full mb-6 shadow">
+        WAYNE COUNTY • LAKE CUMBERLAND
+      </div>
+      
+      <h1 class="text-white text-6xl sm:text-7xl md:text-[84px] leading-[0.92] font-black tracking-[-4.5px] mb-4">
+        SMASHBURGERS<br>DONE RIGHT
+      </h1>
+      <p class="text-white/90 text-2xl sm:text-3xl font-medium tracking-tight mb-10">on Lake Cumberland</p>
+      
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#menu" 
+           class="smash-btn group inline-flex items-center justify-center gap-x-3 bg-white hover:bg-white active:bg-gray-100 text-[#111827] font-semibold text-[17px] px-10 sm:px-12 h-14 rounded-3xl shadow-[0_20px_45px_-12px_rgb(0,0,0,0.35),0_8px_16px_-6px_rgb(0,0,0,0.2)] hover:shadow-[0_25px_60px_-15px_rgb(0,0,0,0.4)] transition-all ring-1 ring-white/70 hover:ring-white/90 hover:-translate-y-px">
+          VIEW THE MENU
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-active:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.75" d="M17 8l4 4m0 0l-4 4m4-4V4" />
+          </svg>
+        </a>
+        <a href="#location" 
+           class="smash-btn inline-flex items-center justify-center gap-x-3 bg-white/10 hover:bg-white/30 border border-white/60 hover:border-white/80 text-white font-semibold text-[17px] px-9 sm:px-10 h-14 rounded-3xl backdrop-blur-md transition-all hover:-translate-y-px">
+          FIND US TODAY
+        </a>
+      </div>
+      
+      <div class="mt-12 flex justify-center">
+        <div class="flex items-center gap-x-8 text-white/70 text-sm">
+          <div class="flex items-center gap-x-2">
+            <span class="font-semibold text-white">★ 4.9</span>
+            <span>on Google</span>
+          </div>
+          <div class="h-3 w-px bg-white/30"></div>
+          <div>Est. 2022 • Wayne County Proud</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center text-white/60 text-xs tracking-widest">
+      SCROLL TO EXPLORE <span class="text-lg leading-none mt-1">↓</span>
+    </div>
+  </header>
+
+  <!-- TRUST BAR -->
+  <div class="border-b bg-white">
+    <div class="max-w-7xl mx-auto px-5 py-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-gray-600">
+      <div class="flex items-center gap-x-2">
+        <span class="font-semibold text-[#9F1239]">LOCAL</span> 
+        <span class="text-gray-400">•</span> 
+        <span>Beef sourced from regional farms when possible</span>
+      </div>
+      <div class="flex items-center gap-x-2">
+        <span class="font-semibold text-[#9F1239]">FRESH</span> 
+        <span class="text-gray-400">•</span> 
+        <span>Hand-smashed to order on the flat top</span>
+      </div>
+      <div class="flex items-center gap-x-2">
+        <span class="font-semibold text-[#9F1239]">LAKE LIFE</span> 
+        <span class="text-gray-400">•</span> 
+        <span>Serving tournaments, boaters &amp; locals</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <section id="menu" class="max-w-7xl mx-auto px-5 pt-14 pb-20">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-3 mb-9">
+      <div>
+        <div class="uppercase text-[#9F1239] text-sm font-bold tracking-[2px]">FROM THE FLAT TOP</div>
+        <h2 class="section-header text-6xl tracking-[-2.5px] font-bold">The Menu</h2>
+      </div>
+      <p class="max-w-md text-gray-600 text-[15px]">
+        All smashburgers are ¼-lb fresh beef smashed on the griddle for that signature crispy lace edge. Served on toasted potato buns.
+      </p>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="flex flex-wrap gap-2 mb-8 border-b pb-1">
+      <button onclick="filterMenu('all')" class="menu-tab active px-5 py-2 text-sm font-semibold" data-tab="all">All</button>
+      <button onclick="filterMenu('burger')" class="menu-tab px-5 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900" data-tab="burger">Smashburgers</button>
+      <button onclick="filterMenu('dog')" class="menu-tab px-5 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900" data-tab="dog">Hot Dogs &amp; Sausages</button>
+      <button onclick="filterMenu('fries')" class="menu-tab px-5 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900" data-tab="fries">Loaded Fries &amp; Sides</button>
+      <button onclick="filterMenu('shake')" class="menu-tab px-5 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900" data-tab="shake">Milkshakes &amp; Drinks</button>
+    </div>
+
+    <!-- Menu Grid -->
+    <div id="menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Populated by JavaScript -->
+    </div>
+
+    <div class="text-center mt-10 text-xs text-gray-500">
+      Prices include tax. All items cooked to order. Ask about our daily lake special.
+    </div>
+  </section>
+
+  <!-- TODAY'S LOCATION -->
+  <section id="location" class="bg-white border-y">
+    <div class="max-w-7xl mx-auto px-5 py-14">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+        <div>
+          <div class="uppercase text-[#9F1239] tracking-[2px] text-sm font-bold">WHERE TO FIND US</div>
+          <h2 class="section-header text-6xl tracking-[-2.25px] font-bold">Today's Location</h2>
+        </div>
+        <div class="text-gray-600 max-w-sm text-[15px]">
+          We move with the lake crowd. Real-time updates on the water.
+        </div>
+      </div>
+
+      <!-- Instagram-style callout -->
+      <div class="mb-7">
+        <a href="#" onclick="event.preventDefault(); showToast('Thanks! In real life this would open Instagram @cumberlandsmash');"
+           class="group inline-flex items-center gap-x-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 border border-gray-200 hover:border-gray-300 rounded-2xl pl-2 pr-5 py-1.5 text-xs text-gray-600 shadow-sm transition-all">
+          <span class="inline-flex w-6 h-6 items-center justify-center rounded-xl bg-gradient-to-br from-[#E1306C] via-[#F56040] to-[#FCAF45] text-white text-base leading-none shadow-sm">📷</span>
+          <span>Follow <span class="font-semibold text-[#9F1239] group-hover:underline">@cumberlandsmash</span> for daily locations &amp; lake specials</span>
+        </a>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-6">
+        <!-- Schedule -->
+        <div class="lg:col-span-2">
+          <div class="space-y-3" id="schedule-list">
+            <!-- Populated via JS -->
+          </div>
+          
+          <div class="mt-6 text-xs text-gray-500 pl-1">
+            Schedule subject to change for private events &amp; weather. 
+            <span class="font-medium text-[#9F1239]">Call or text for the latest.</span>
+          </div>
+        </div>
+
+        <!-- Map -->
+        <div class="lg:col-span-3">
+          <div class="bg-gray-100 rounded-3xl overflow-hidden border border-gray-200 shadow-inner" style="height: 420px;">
+            <div id="map" class="w-full h-full"></div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-500 mt-3 px-1">
+            <div>Interactive demo map • Lake Cumberland region</div>
+            <div class="font-medium">Monticello, Wayne County, KY</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATERING -->
+  <section id="catering" class="max-w-7xl mx-auto px-5 py-16">
+    <div class="grid lg:grid-cols-12 gap-x-12 gap-y-10 items-center">
+      <div class="lg:col-span-5">
+        <div class="uppercase text-[#9F1239] text-sm font-bold tracking-[2px]">FOR LAKE PARTIES, TOURNAMENTS &amp; MORE</div>
+        <h2 class="section-header text-6xl tracking-[-2.5px] font-bold leading-none mt-2 mb-6">Catering that<br>shows up right.</h2>
+        
+        <p class="text-[15px] text-gray-600 mb-8">
+          We love feeding the Lake Cumberland community — from fishing tournaments and family reunions to houseboat weekends and corporate outings. 
+          Full-service or drop-off available.
+        </p>
+
+        <button onclick="showCateringModal()" 
+                class="smash-btn inline-flex items-center gap-x-3 bg-[#9F1239] hover:bg-[#7F1D1D] active:bg-[#651428] transition-colors text-white font-semibold px-10 h-14 rounded-3xl text-base shadow-[0_10px_30px_-10px_rgb(159,18,57,0.5)] hover:shadow-[0_14px_35px_-10px_rgb(159,18,57,0.6)]">
+          REQUEST A CATERING QUOTE
+        </button>
+        <div class="mt-3 text-xs text-amber-700/80 font-medium flex items-center gap-x-1.5">
+          <span class="inline-block w-1.5 h-1.5 bg-amber-600 rounded-full animate-pulse"></span>
+          Summer dates filling fast • Most quotes confirmed within hours
+        </div>
+      </div>
+
+      <div class="lg:col-span-7">
+        <div class="grid sm:grid-cols-2 gap-5">
+          <div class="bg-white border border-gray-200 rounded-3xl p-6">
+            <div class="font-semibold text-lg mb-1">Lake Parties &amp; Houseboats</div>
+            <div class="text-sm text-gray-600 mb-4">Perfect for groups on the water. We bring the grill to the dock or ramp.</div>
+            <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Starting at $14/person</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-3xl p-6">
+            <div class="font-semibold text-lg mb-1">Fishing Tournaments</div>
+            <div class="text-sm text-gray-600 mb-4">Early mornings, big appetites. We’ve got you covered at the weigh-in.</div>
+            <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Popular with local clubs</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-3xl p-6">
+            <div class="font-semibold text-lg mb-1">Private Events &amp; Reunions</div>
+            <div class="text-sm text-gray-600 mb-4">Birthdays, family weekends, and celebrations at the lake.</div>
+            <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Custom packages available</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-3xl p-6">
+            <div class="font-semibold text-lg mb-1">Corporate &amp; Community</div>
+            <div class="text-sm text-gray-600 mb-4">Company picnics, church events, school functions, and festivals.</div>
+            <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Full service with setup</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS: Social Proof -->
+  <section id="testimonials" class="bg-[#FFFBEB] border-y border-gray-100">
+    <div class="max-w-7xl mx-auto px-5 py-16">
+      <div class="text-center mb-9">
+        <div class="uppercase text-[#9F1239] text-xs font-bold tracking-[2.5px]">REAL TALK FROM THE LAKE</div>
+        <h2 class="section-header text-5xl md:text-[56px] tracking-[-2px] font-bold mt-1.5">What Lake Folks Are Saying</h2>
+        <p class="mt-2 text-gray-600 max-w-md mx-auto text-[14.5px]">Real reviews from boaters, tournament crews, families &amp; neighbors who keep coming back.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Testimonial 1 -->
+        <div class="testimonial-card bg-white border border-gray-100 rounded-3xl p-6 flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-px transition-all duration-200">
+          <div class="flex items-center gap-x-3.5 mb-4">
+            <div class="w-[54px] h-[54px] rounded-full overflow-hidden ring-1 ring-gray-100 flex-shrink-0 shadow-sm">
+              <img src="assets/images/testimonial-1.jpg" alt="Mike R., Wayne County local and tournament dad" class="w-full h-full object-cover">
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold tracking-tight">Mike R.</div>
+              <div class="text-[11px] text-gray-500 leading-tight">Wayne County • Tournament dad</div>
+            </div>
+          </div>
+          <div class="text-[14.2px] leading-[1.38] text-gray-700 flex-1">“First time trying them after the bass tournament. Crispy edges, fresh, and the kids cleaned their plates. We’ll be back every time they’re in Memorial Park.”</div>
+        </div>
+
+        <!-- Testimonial 2 -->
+        <div class="testimonial-card bg-white border border-gray-100 rounded-3xl p-6 flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-px transition-all duration-200">
+          <div class="flex items-center gap-x-3.5 mb-4">
+            <div class="w-[54px] h-[54px] rounded-full overflow-hidden ring-1 ring-gray-100 flex-shrink-0 shadow-sm">
+              <img src="assets/images/testimonial-2.jpg" alt="Jenna T., Lake Cumberland houseboat regular and boater" class="w-full h-full object-cover">
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold tracking-tight">Jenna T.</div>
+              <div class="text-[11px] text-gray-500 leading-tight">Houseboat regular • Fall Creek</div>
+            </div>
+          </div>
+          <div class="text-[14.2px] leading-[1.38] text-gray-700 flex-1">“Rolled up to the dock at Fall Creek right when we needed it. Hot food, cold shakes, zero hassle. Made the whole houseboat weekend.”</div>
+        </div>
+
+        <!-- Testimonial 3 -->
+        <div class="testimonial-card bg-white border border-gray-100 rounded-3xl p-6 flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-px transition-all duration-200">
+          <div class="flex items-center gap-x-3.5 mb-4">
+            <div class="w-[54px] h-[54px] rounded-full overflow-hidden ring-1 ring-gray-100 flex-shrink-0 shadow-sm">
+              <img src="assets/images/testimonial-3.jpg" alt="Bill Harlan, lifelong Monticello local and Cumberland regular" class="w-full h-full object-cover">
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold tracking-tight">Bill Harlan</div>
+              <div class="text-[11px] text-gray-500 leading-tight">Monticello • Lifelong local</div>
+            </div>
+          </div>
+          <div class="text-[14.2px] leading-[1.38] text-gray-700 flex-1">“Been a regular since day one. You can tell they put care into every burger. My grandkids ask for the loaded fries by name now.”</div>
+        </div>
+
+        <!-- Testimonial 4 -->
+        <div class="testimonial-card bg-white border border-gray-100 rounded-3xl p-6 flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-px transition-all duration-200">
+          <div class="flex items-center gap-x-3.5 mb-4">
+            <div class="w-[54px] h-[54px] rounded-full overflow-hidden ring-1 ring-gray-100 flex-shrink-0 shadow-sm">
+              <img src="assets/images/testimonial-4.jpg" alt="Taylor S., young local angler and weekend regular at Lake Cumberland" class="w-full h-full object-cover">
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold tracking-tight">Taylor S.</div>
+              <div class="text-[11px] text-gray-500 leading-tight">Local angler • Weekend regular</div>
+            </div>
+          </div>
+          <div class="text-[14.2px] leading-[1.38] text-gray-700 flex-1">“Stopped after the club weigh-in. Super fast line, friendly folks, and that mushroom swiss actually blew me away. Hidden gem on the lake.”</div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-center">
+        <div class="inline-flex items-center gap-x-2 rounded-2xl bg-white border border-gray-100 text-xs px-4 h-8 text-gray-500">
+          <span class="font-semibold text-[#9F1239]">★ 4.9</span> 
+          <span>on Google</span> 
+          <span class="text-gray-300">•</span> 
+          <span>200+ reviews from the shoreline</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="bg-[#111827] text-white py-16">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="grid lg:grid-cols-2 gap-x-14 gap-y-10 items-center">
+        <div>
+          <div class="uppercase tracking-[2.5px] text-sm font-semibold text-[#F59E0B]">WAYNE COUNTY PROUD SINCE 2022</div>
+          <h3 class="section-header text-6xl tracking-[-2.25px] font-bold mt-3 leading-none">We smash for<br>the lake life.</h3>
+          
+          <div class="mt-8 space-y-5 text-[15px] text-gray-300 max-w-md">
+            <p>Cumberland Smash started with two brothers who grew up fishing these waters and wanted to bring something special to the shoreline — proper smashburgers with that perfect crispy edge, made fresh and served with a smile.</p>
+            <p>Today we roll through Monticello, the boat ramps, Memorial Park, and the best lakeside spots around the Cumberland. We show up for the early tournaments, the weekend crowds, and the families who make this place home.</p>
+          </div>
+
+          <div class="mt-8 flex items-center gap-x-3 text-sm">
+            <div class="bg-white/10 px-4 h-9 inline-flex items-center rounded-3xl text-sm">Family owned &amp; operated</div>
+            <div class="bg-white/10 px-4 h-9 inline-flex items-center rounded-3xl text-sm">Local ingredients when we can</div>
+          </div>
+        </div>
+
+        <div class="relative rounded-3xl overflow-hidden border border-white/10 aspect-video lg:aspect-auto lg:h-[420px]">
+          <img src="assets/images/truck-lakeside.jpg" alt="Cumberland Smash food truck parked lakeside at golden hour on Lake Cumberland, Kentucky" 
+               class="absolute inset-0 w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/50"></div>
+          <div class="absolute bottom-6 left-6 right-6 text-white">
+            <div class="font-semibold">Our truck at Fall Creek • Lake Cumberland</div>
+            <div class="text-sm text-white/70">Serving the community we love</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA / CONTACT -->
+  <section id="contact" class="max-w-7xl mx-auto px-5 py-16">
+    <div class="bg-[#9F1239] text-white rounded-3xl px-8 md:px-14 py-14 md:py-16 text-center md:text-left md:flex md:items-center md:justify-between gap-10">
+      <div class="max-w-lg">
+        <div class="font-black text-5xl md:text-6xl tracking-[-2px] leading-none mb-3">Hungry?<br>Come find us.</div>
+        <p class="text-white/80 text-lg">We’re usually parked near the water. Follow along for daily locations and specials.</p>
+      </div>
+
+      <div class="mt-8 md:mt-0 flex flex-col gap-y-3 text-sm md:text-base">
+        <a href="tel:6065550192" class="inline-flex items-center justify-center gap-x-3 bg-white text-[#9F1239] font-semibold px-8 h-14 rounded-3xl hover:bg-amber-50 active:bg-amber-100 transition">
+          <span>CALL OR TEXT</span> <span class="font-mono tracking-wider">(606) 555-0192</span>
+        </a>
+        <div class="flex justify-center md:justify-start gap-x-3 text-white/90 text-sm">
+          <a href="#" class="hover:text-white underline underline-offset-4">Instagram @cumberlandsmash</a>
+          <span class="text-white/40">•</span>
+          <a href="#" class="hover:text-white underline underline-offset-4">Facebook</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t bg-white">
+    <div class="max-w-7xl mx-auto px-5 py-9 text-sm text-gray-600 flex flex-col md:flex-row md:items-center gap-y-2 justify-between">
+      <div>
+        © Cumberland Smash Burgers • Monticello, Wayne County, Kentucky
+      </div>
+      <div class="flex gap-x-5 text-xs">
+        <div>Est. 2022</div>
+        <div class="text-gray-400">•</div>
+        <div>Made for the lake</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CART DRAWER -->
+  <div id="cart-drawer" class="hidden fixed inset-0 z-[70]">
+    <!-- Backdrop -->
+    <div onclick="toggleCart()" class="absolute inset-0 bg-black/60"></div>
+    
+    <!-- Drawer -->
+    <div onclick="event.stopImmediatePropagation()" 
+         class="cart-drawer absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col border-l">
+      
+      <div class="flex items-center justify-between px-6 h-20 border-b">
+        <div>
+          <div class="font-semibold text-xl tracking-tight">Your Order</div>
+          <div class="text-xs text-gray-500" id="cart-location-hint">Pickup at today's location</div>
+        </div>
+        <button onclick="toggleCart()" class="text-3xl leading-none text-gray-400 hover:text-gray-600">×</button>
+      </div>
+
+      <div class="flex-1 overflow-auto px-6 py-5" id="cart-items">
+        <!-- JS populated cart lines -->
+      </div>
+
+      <div class="border-t p-6 bg-white">
+        <div class="flex items-center justify-between text-base mb-5">
+          <div class="font-medium">Subtotal</div>
+          <div id="cart-subtotal" class="font-semibold text-2xl tabular-nums">$0.00</div>
+        </div>
+
+        <button onclick="checkout()" 
+                class="w-full h-14 bg-[#9F1239] hover:bg-[#7F1D1D] active:bg-[#651428] transition text-white font-semibold rounded-3xl text-base tracking-wider">
+          PLACE ORDER
+        </button>
+        
+        <div class="text-center text-[10px] text-gray-500 mt-3.5">
+          Demo only • No real payment processed
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-[80] flex flex-col gap-y-2"></div>
+
+  <!-- CATERING MODAL -->
+  <div id="catering-modal" onclick="if (event.target.id === 'catering-modal') hideCateringModal()" class="hidden fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-4">
+    <div onclick="event.stopImmediatePropagation()" class="bg-white rounded-3xl w-full max-w-lg overflow-hidden">
+      <div class="px-8 pt-8 pb-6">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="text-[#9F1239] font-bold text-sm tracking-wider">CATERING INQUIRY</div>
+            <div class="text-3xl font-semibold tracking-tighter">Let’s feed the lake.</div>
+          </div>
+          <button onclick="hideCateringModal()" class="text-3xl leading-none -mt-2 text-gray-400 hover:text-gray-600">×</button>
+        </div>
+
+        <form id="catering-form" onsubmit="submitCatering(event)" class="mt-7 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-medium text-gray-500 block mb-1">YOUR NAME</label>
+              <input type="text" required class="w-full border border-gray-300 rounded-2xl px-4 h-12 text-sm focus:outline-none focus:border-[#9F1239]" placeholder="Alex Rivera">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500 block mb-1">PHONE</label>
+              <input type="tel" required class="w-full border border-gray-300 rounded-2xl px-4 h-12 text-sm focus:outline-none focus:border-[#9F1239]" placeholder="(606) 555-1234">
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500 block mb-1">EVENT TYPE &amp; DATE</label>
+            <input type="text" required class="w-full border border-gray-300 rounded-2xl px-4 h-12 text-sm focus:outline-none focus:border-[#9F1239]" placeholder="Fishing tournament • June 21st">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500 block mb-1">HOW MANY GUESTS?</label>
+            <input type="text" required class="w-full border border-gray-300 rounded-2xl px-4 h-12 text-sm focus:outline-none focus:border-[#9F1239]" placeholder="35–45 people">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-500 block mb-1">NOTES / LOCATION DETAILS</label>
+            <textarea rows="3" class="w-full border border-gray-300 rounded-3xl px-4 py-3 text-sm focus:outline-none focus:border-[#9F1239]" placeholder="We’ll be at the Monticello boat ramp. Need service around 11am."></textarea>
+          </div>
+
+          <button type="submit" class="mt-2 w-full h-14 bg-[#9F1239] text-white font-semibold rounded-3xl active:bg-[#7F1D1D]">
+            SEND REQUEST
+          </button>
+        </form>
+      </div>
+      <div class="bg-gray-50 px-8 py-4 text-xs text-gray-500 text-center border-t">
+        We typically respond within a few hours. Thanks for supporting local!
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT SUCCESS MODAL -->
+  <div id="success-modal" onclick="if (event.target.id === 'success-modal') hideSuccessModal()" class="hidden fixed inset-0 z-[95] bg-black/70 flex items-center justify-center p-4">
+    <div onclick="event.stopImmediatePropagation()" class="bg-white rounded-3xl w-full max-w-md p-8 text-center">
+      <div class="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </div>
+      
+      <div class="font-semibold text-3xl tracking-tight">Order placed!</div>
+      <div id="success-order-number" class="text-sm text-gray-500 mt-1 font-mono tracking-widest"></div>
+      
+      <div class="my-7 text-[15px] leading-snug text-gray-600">
+        Thanks, <span id="success-name" class="font-medium"></span>!<br>
+        Your food will be ready for pickup at <span id="success-location" class="font-semibold text-[#9F1239]"></span>.
+      </div>
+
+      <div class="bg-amber-50 border border-amber-100 text-amber-800 text-sm rounded-2xl px-5 py-4 text-left">
+        <div class="font-semibold mb-px">See you at the lake!</div>
+        <div class="text-xs">Bring this confirmation or just tell us your name when you arrive.</div>
+      </div>
+
+      <button onclick="hideSuccessModal()" 
+              class="mt-7 w-full bg-[#111827] hover:bg-black text-white h-12 rounded-3xl font-semibold text-sm tracking-wider">
+        BACK TO THE MENU
+      </button>
+    </div>
+  </div>
+
+  <!-- MOBILE FLOATING CTA -->
+  <div class="md:hidden fixed bottom-0 inset-x-0 z-[65] bg-white/95 backdrop-blur-lg border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+    <div class="px-4 py-3">
+      <a href="#menu" 
+         onclick="document.getElementById('menu').scrollIntoView({behavior:'smooth', block:'start'})"
+         class="smash-btn flex items-center justify-center w-full h-12 bg-[#9F1239] hover:bg-[#7F1D1D] active:bg-[#651428] text-white font-semibold text-sm tracking-[0.5px] rounded-3xl shadow-lg active:scale-[0.985] transition-all">
+        SEE TODAY'S MENU
+        <span class="ml-2 text-lg leading-none">→</span>
+      </a>
+      <div class="text-center text-[10px] text-gray-400 mt-1.5 tracking-wide">Fresh smashburgers • Ready in minutes</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Tailwind script configuration
+    function initTailwind() {
+      document.documentElement.style.setProperty('--accent', '#9F1239');
+      
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .smash-btn, button { -webkit-tap-highlight-color: transparent; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Menu Data — the heart of the experience
+    const menuItems = [
+      // Smashburgers
+      { id: "b1", category: "burger", name: "The Classic Smash", price: 9.50, 
+        desc: "Two smashed patties, American cheese, pickles, onions, house smash sauce", 
+        img: "assets/images/smash-classic.jpg", badge: "Most Popular" },
+      { id: "b2", category: "burger", name: "Cheese Smash", price: 10.50, 
+        desc: "Classic with extra American cheese. Simple. Perfect.", 
+        img: "assets/images/smash-cheese.jpg", badge: null },
+      { id: "b3", category: "burger", name: "Bacon Cheddar Smash", price: 12.75, 
+        desc: "Crispy bacon, aged cheddar, pickles, grilled onions & special sauce", 
+        img: "assets/images/smash-bacon-cheddar.jpg", badge: "Local Favorite" },
+      { id: "b4", category: "burger", name: "Double Stack", price: 13.75, 
+        desc: "Four patties, double cheese, the works. For the truly hungry.", 
+        img: "assets/images/smash-double.jpg", badge: null },
+      { id: "b5", category: "burger", name: "Mushroom & Swiss", price: 11.50, 
+        desc: "Sautéed mushrooms, Swiss, caramelized onions, garlic aioli", 
+        img: "assets/images/smash-mushroom-swiss.jpg", badge: null },
+      
+      // Hot Dogs & Sausages
+      { id: "d1", category: "dog", name: "Cumberland Classic Dog", price: 7.50, 
+        desc: "All-beef frank, mustard, relish, onions, special sauce", 
+        img: "assets/images/hotdog-classic.jpg", badge: null },
+      { id: "d2", category: "dog", name: "Chili Cheese Dog", price: 8.75, 
+        desc: "House chili, melted cheddar, diced onions", 
+        img: "assets/images/hotdog-chili.jpg", badge: null },
+      { id: "d3", category: "dog", name: "Smoked Sausage", price: 9.25, 
+        desc: "Kentucky-style smoked sausage, peppers & onions, mustard", 
+        img: "assets/images/hotdog-sausage.jpg", badge: "New" },
+      
+      // Fries & Sides
+      { id: "f1", category: "fries", name: "Classic Crinkle Fries", price: 5.00, 
+        desc: "Golden, crispy, perfectly salted. The essential side.", 
+        img: "assets/images/fries-classic.jpg", badge: null },
+      { id: "f2", category: "fries", name: "Loaded Cheese Fries", price: 7.50, 
+        desc: "Melted cheddar, green onions, house sauce", 
+        img: "assets/images/fries-loaded.jpg", badge: null },
+      { id: "f3", category: "fries", name: "Chili Cheese Fries", price: 8.75, 
+        desc: "House beef chili, sharp cheddar, onions", 
+        img: "assets/images/fries-chili.jpg", badge: "Local Favorite" },
+      { id: "f4", category: "fries", name: "Fully Loaded Fries", price: 9.50, 
+        desc: "Chili, bacon, cheese, jalapeños, ranch drizzle", 
+        img: "assets/images/fries-fully-loaded.jpg", badge: null },
+      
+      // Milkshakes & Drinks
+      { id: "s1", category: "shake", name: "Vanilla Milkshake", price: 6.50, 
+        desc: "Classic hand-spun with real vanilla bean", 
+        img: "assets/images/milkshake-vanilla.jpg", badge: null },
+      { id: "s2", category: "shake", name: "Blackberry Milkshake", price: 7.25, 
+        desc: "Local blackberries, whipped cream, fresh berry swirl", 
+        img: "assets/images/milkshake-blackberry.jpg", badge: "Lake Specialty" },
+      { id: "s3", category: "shake", name: "Chocolate Milkshake", price: 6.75, 
+        desc: "Rich chocolate with whipped cream", 
+        img: "assets/images/milkshake-chocolate.jpg", badge: null },
+      { id: "s4", category: "shake", name: "Fresh Lemonade", price: 3.75, 
+        desc: "Made daily. Sweet or half-and-half.", 
+        img: "assets/images/lemonade.jpg", badge: null },
+      { id: "s5", category: "shake", name: "Sweet Tea", price: 3.50, 
+        desc: "Classic Kentucky-style, perfectly brewed", 
+        img: "assets/images/sweet-tea.jpg", badge: null },
+    ];
+
+    let cart = [];
+    let currentFilter = 'all';
+    let map = null;
+    let markers = [];
+
+    // Load cart from localStorage
+    function loadCart() {
+      const saved = localStorage.getItem('cumberlandCart');
+      if (saved) {
+        cart = JSON.parse(saved);
+        updateCartCount();
+      }
+    }
+
+    function saveCart() {
+      localStorage.setItem('cumberlandCart', JSON.stringify(cart));
+    }
+
+    function updateCartCount() {
+      const countEl = document.getElementById('cart-count');
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      countEl.textContent = totalItems;
+      countEl.style.display = totalItems > 0 ? 'inline-flex' : 'none';
+    }
+
+    // Render the entire menu grid
+    function renderMenu(filter = 'all') {
+      const grid = document.getElementById('menu-grid');
+      grid.innerHTML = '';
+      currentFilter = filter;
+
+      const filtered = filter === 'all' ? menuItems : menuItems.filter(i => i.category === filter);
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `food-card bg-white border border-gray-200 rounded-3xl overflow-hidden flex flex-col group`;
+        
+        const badgeHTML = item.badge ? 
+          `<div class="absolute top-3 right-3 bg-[#9F1239] text-white text-[10px] font-bold px-3 py-px rounded-full tracking-wider shadow">${item.badge}</div>` : '';
+
+        card.innerHTML = `
+          <div class="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+            <img src="${item.img}" alt="${item.name}" class="menu-item-img w-full h-full object-cover">
+            ${badgeHTML}
+          </div>
+          <div class="p-5 flex flex-col flex-1">
+            <div class="flex justify-between items-start gap-x-4">
+              <div class="font-semibold text-[17px] leading-tight tracking-tight">${item.name}</div>
+              <div class="font-mono font-semibold text-lg tabular-nums shrink-0 price-tag">$${item.price.toFixed(2)}</div>
+            </div>
+            <div class="text-gray-600 text-sm mt-2 leading-snug flex-1">${item.desc}</div>
+            
+            <button onclick="addToCart('${item.id}'); event.stopImmediatePropagation();" 
+                    class="smash-btn mt-5 w-full h-11 bg-[#9F1239] hover:bg-[#7F1D1D] active:bg-[#651428] transition text-white text-sm font-semibold rounded-2xl tracking-wider flex items-center justify-center gap-x-2 shadow-sm">
+              <span>ADD TO CART</span>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterMenu(category) {
+      // Update active tab styles
+      document.querySelectorAll('.menu-tab').forEach(tab => {
+        tab.classList.remove('active');
+        tab.classList.add('text-gray-600');
+        if (tab.dataset.tab === category) {
+          tab.classList.add('active');
+          tab.classList.remove('text-gray-600');
+        }
+      });
+      renderMenu(category);
+    }
+
+    // Add item to cart
+    function addToCart(itemId) {
+      const item = menuItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      const existing = cart.find(i => i.id === itemId);
+      
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ ...item, qty: 1 });
+      }
+
+      saveCart();
+      updateCartCount();
+
+      // Beautiful toast
+      showToast(`${item.name} added`, true);
+
+      // Optional: briefly open cart on first add
+      if (cart.length === 1) {
+        setTimeout(() => {
+          if (!document.getElementById('cart-drawer').classList.contains('hidden') === false) {
+            // don't auto open every time
+          }
+        }, 650);
+      }
+    }
+
+    function showToast(message, showViewCart = false) {
+      const container = document.getElementById('toast-container');
+      
+      const toast = document.createElement('div');
+      toast.className = `toast flex items-center gap-x-3 bg-[#111827] text-white px-5 h-12 rounded-3xl shadow-xl text-sm`;
+      
+      toast.innerHTML = `
+        <div class="flex-1">${message}</div>
+        ${showViewCart ? `<button onclick="toggleCart(); this.closest('.toast').remove();" class="text-[#F59E0B] font-semibold text-xs tracking-wider px-3 py-1">VIEW CART</button>` : ''}
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 3200);
+    }
+
+    // Render cart drawer contents
+    function renderCart() {
+      const container = document.getElementById('cart-items');
+      const subtotalEl = document.getElementById('cart-subtotal');
+      
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full py-12 text-center">
+            <div class="text-5xl mb-4 opacity-30">🍔</div>
+            <div class="font-medium">Your cart is empty</div>
+            <div class="text-sm text-gray-500 mt-1">Add something delicious from the menu</div>
+          </div>
+        `;
+        subtotalEl.textContent = '$0.00';
+        return;
+      }
+
+      let html = '';
+      let subtotal = 0;
+
+      cart.forEach((item, index) => {
+        const lineTotal = item.price * item.qty;
+        subtotal += lineTotal;
+
+        html += `
+          <div class="flex gap-4 py-4 border-b last:border-none">
+            <div class="w-16 h-16 rounded-2xl overflow-hidden border flex-shrink-0">
+              <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between gap-x-2">
+                <div class="font-semibold leading-tight">${item.name}</div>
+                <div class="font-mono tabular-nums text-right">$${lineTotal.toFixed(2)}</div>
+              </div>
+              <div class="text-xs text-gray-500 mt-0.5">$${item.price.toFixed(2)} each</div>
+              
+              <div class="flex items-center justify-between mt-3">
+                <div class="flex items-center border border-gray-200 rounded-2xl overflow-hidden">
+                  <button onclick="changeQty(${index}, -1)" class="w-8 h-8 flex items-center justify-center text-xl font-light hover:bg-gray-100 active:bg-gray-200">−</button>
+                  <div class="w-8 text-center text-sm font-semibold tabular-nums">${item.qty}</div>
+                  <button onclick="changeQty(${index}, 1)" class="w-8 h-8 flex items-center justify-center text-xl font-light hover:bg-gray-100 active:bg-gray-200">+</button>
+                </div>
+                
+                <button onclick="removeFromCart(${index})" class="text-red-600 text-xs font-medium hover:underline px-2">Remove</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      subtotalEl.textContent = '$' + subtotal.toFixed(2);
+    }
+
+    function changeQty(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty < 1) cart[index].qty = 1;
+      saveCart();
+      renderCart();
+      updateCartCount();
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      saveCart();
+      renderCart();
+      updateCartCount();
+    }
+
+    function toggleCart() {
+      const drawer = document.getElementById('cart-drawer');
+      const isHidden = drawer.classList.contains('hidden');
+      
+      if (isHidden) {
+        drawer.classList.remove('hidden');
+        drawer.classList.add('flex');
+        renderCart();
+      } else {
+        drawer.classList.add('hidden');
+        drawer.classList.remove('flex');
+      }
+    }
+
+    // Checkout flow
+    function checkout() {
+      if (cart.length === 0) return;
+
+      const drawer = document.getElementById('cart-drawer');
+      drawer.classList.add('hidden');
+      drawer.classList.remove('flex');
+
+      // Find today's location for the success message
+      const today = getTodayLocation();
+      
+      // Create a simple checkout experience inside a success modal
+      showSuccessModal(today);
+    }
+
+    function showSuccessModal(todayLocation) {
+      const modal = document.getElementById('success-modal');
+      const orderNumEl = document.getElementById('success-order-number');
+      const nameEl = document.getElementById('success-name');
+      const locEl = document.getElementById('success-location');
+
+      // Generate a nice fake order number
+      const orderNum = 'CS-' + Date.now().toString().slice(-7);
+      orderNumEl.textContent = orderNum;
+
+      // Pre-fill a friendly name (demo)
+      nameEl.textContent = 'friend';
+      
+      locEl.textContent = todayLocation ? todayLocation.location : "today's spot";
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Clear the cart on successful demo order
+      cart = [];
+      saveCart();
+      updateCartCount();
+      localStorage.removeItem('cumberlandCart');
+    }
+
+    function hideSuccessModal() {
+      const modal = document.getElementById('success-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      
+      // Scroll back to menu so they can keep browsing
+      document.getElementById('menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Catering modal
+    function showCateringModal() {
+      const modal = document.getElementById('catering-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function hideCateringModal() {
+      const modal = document.getElementById('catering-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitCatering(e) {
+      e.preventDefault();
+      const modal = document.getElementById('catering-modal');
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-3xl w-full max-w-lg p-10 text-center">
+          <div class="mx-auto mb-5 w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center">
+            <span class="text-3xl">📍</span>
+          </div>
+          <div class="font-semibold text-2xl tracking-tight">Thank you!</div>
+          <p class="mt-3 text-gray-600">Your catering request has been received. We'll call or text you within a couple of hours to lock in the details and give you an exact quote.</p>
+          
+          <div class="mt-8 text-sm">
+            <button onclick="hideCateringModal(); document.getElementById('catering-modal').innerHTML = ''; location.reload();" 
+                    class="px-8 h-12 bg-[#9F1239] text-white font-semibold rounded-3xl">CLOSE</button>
+          </div>
+          <div class="text-[10px] text-gray-400 mt-6">Cumberland Smash — We show up for the big moments on the water.</div>
+        </div>
+      `;
+    }
+
+    // Today's Location Data (authentic to Lake Cumberland / Wayne County)
+    const locations = [
+      {
+        id: 1,
+        day: "Today",
+        date: "June 6",
+        location: "Monticello Wayne County Memorial Park",
+        time: "11:00 AM – 7:00 PM",
+        address: "Park Rd, Monticello, KY 42633",
+        lat: 36.8295,
+        lng: -84.8492,
+        note: "Big turnout expected — plenty of parking near the ball fields."
+      },
+      {
+        id: 2,
+        day: "Tomorrow",
+        date: "June 7",
+        location: "Fall Creek Boat Ramp & Recreation Area",
+        time: "10:30 AM – 6:30 PM",
+        address: "KY-2393, Monticello, KY",
+        lat: 36.815,
+        lng: -84.905,
+        note: "Great for boaters. We’ll be near the upper lot."
+      },
+      {
+        id: 3,
+        day: "Saturday",
+        date: "June 8",
+        location: "Lake Cumberland State Resort Park",
+        time: "11:00 AM – 8:00 PM",
+        address: "5465 State Park Rd, Jamestown, KY 42629",
+        lat: 36.922,
+        lng: -85.042,
+        note: "Near the marina and beach area. Perfect for weekend crowds."
+      },
+      {
+        id: 4,
+        day: "Sunday",
+        date: "June 9",
+        location: "Downtown Monticello – Courthouse Square",
+        time: "12:00 PM – 6:00 PM",
+        address: "Main Street, Monticello, KY",
+        lat: 36.834,
+        lng: -84.849,
+        note: "Market day vibes. Come grab lunch and walk the square."
+      },
+      {
+        id: 5,
+        day: "Next Week",
+        date: "June 13",
+        location: "Wolf Creek Marina Area",
+        time: "11:00 AM – 7:00 PM",
+        address: "Wolf Creek Rd, Monticello area",
+        lat: 36.78,
+        lng: -84.92,
+        note: "Serving houseboaters and weekenders all day."
+      }
+    ];
+
+    function getTodayLocation() {
+      return locations[0]; // Today is first entry
+    }
+
+    function renderSchedule() {
+      const container = document.getElementById('schedule-list');
+      container.innerHTML = '';
+
+      locations.forEach((loc, index) => {
+        const isToday = index === 0;
+        
+        const el = document.createElement('div');
+        el.className = `location-card border ${isToday ? 'border-[#9F1239] bg-[#9F1239]/5' : 'border-gray-200'} rounded-3xl p-5 cursor-pointer`;
+        if (isToday) el.classList.add('active');
+
+        el.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="flex items-center gap-x-2">
+                <span class="font-semibold text-lg tracking-tight">${loc.location}</span>
+                ${isToday ? `<span class="text-xs px-2.5 py-px rounded bg-[#9F1239] text-white font-bold">HERE TODAY</span>` : ''}
+              </div>
+              <div class="text-sm text-gray-500 mt-0.5">${loc.day} • ${loc.date} • ${loc.time}</div>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500 mt-3">${loc.address}</div>
+          ${loc.note ? `<div class="text-xs mt-2 text-emerald-700 font-medium">${loc.note}</div>` : ''}
+        `;
+
+        el.onclick = () => {
+          // Highlight this card
+          document.querySelectorAll('.location-card').forEach(c => c.classList.remove('active', 'border-[#9F1239]', 'bg-[#9F1239]/5'));
+          el.classList.add('active', 'border-[#9F1239]', 'bg-[#9F1239]/5');
+          
+          // Fly the map
+          if (map) {
+            map.flyTo([loc.lat, loc.lng], 13, { duration: 1.1 });
+            
+            // Open the corresponding popup
+            setTimeout(() => {
+              markers.forEach(m => {
+                if (m.options.id === loc.id) m.openPopup();
+              });
+            }, 900);
+          }
+        };
+
+        container.appendChild(el);
+      });
+    }
+
+    function initMap() {
+      // Center on the Lake Cumberland / Monticello region
+      const mapContainer = document.getElementById('map');
+      map = L.map(mapContainer, { 
+        zoomControl: false,
+        attributionControl: false 
+      }).setView([36.84, -84.88], 11);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        className: 'map-tiles'
+      }).addTo(map);
+
+      markers = [];
+
+      locations.forEach(loc => {
+        const isToday = loc.day === "Today";
+        
+        const marker = L.marker([loc.lat, loc.lng], {
+          id: loc.id
+        }).addTo(map);
+
+        const popupHTML = `
+          <div class="text-sm">
+            <div class="font-semibold">${loc.location}</div>
+            <div class="text-xs text-gray-500 mt-0.5">${loc.day} • ${loc.time}</div>
+            <div class="mt-2 text-xs">${loc.address}</div>
+            ${isToday ? `<div class="mt-2 inline-block text-xs bg-[#9F1239] text-white px-2.5 py-px rounded font-bold">WE'RE HERE TODAY</div>` : ''}
+          </div>
+        `;
+
+        marker.bindPopup(popupHTML, { closeButton: true, offset: [0, -8] });
+        
+        // Click marker also highlights the schedule card
+        marker.on('click', () => {
+          document.querySelectorAll('.location-card').forEach((card, idx) => {
+            card.classList.remove('active', 'border-[#9F1239]', 'bg-[#9F1239]/5');
+            if (locations[idx].id === loc.id) {
+              card.classList.add('active', 'border-[#9F1239]', 'bg-[#9F1239]/5');
+            }
+          });
+        });
+
+        markers.push(marker);
+      });
+
+      // Open popup for today's location on load
+      setTimeout(() => {
+        const todayMarker = markers.find(m => m.options.id === 1);
+        if (todayMarker) todayMarker.openPopup();
+      }, 950);
+    }
+
+    // Mobile nav
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Sticky nav background on scroll
+    function initNavScroll() {
+      const nav = document.getElementById('nav');
+      let lastScroll = 0;
+      
+      window.addEventListener('scroll', () => {
+        const current = window.scrollY;
+        if (current > 30) {
+          nav.classList.add('nav-scrolled', 'shadow-sm');
+        } else {
+          nav.classList.remove('nav-scrolled', 'shadow-sm');
+        }
+        lastScroll = current;
+      }, { passive: true });
+    }
+
+    // Keyboard support for cart
+    function initKeyboard() {
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          const cartDrawer = document.getElementById('cart-drawer');
+          const catering = document.getElementById('catering-modal');
+          const success = document.getElementById('success-modal');
+          
+          if (!catering.classList.contains('hidden')) {
+            hideCateringModal();
+          } else if (!success.classList.contains('hidden')) {
+            hideSuccessModal();
+          } else if (!cartDrawer.classList.contains('hidden')) {
+            cartDrawer.classList.add('hidden');
+            cartDrawer.classList.remove('flex');
+          }
+        }
+        
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          toggleCart();
+        }
+      });
+    }
+
+    // Filter initial active tab state
+    function initMenuTabs() {
+      const tabs = document.querySelectorAll('.menu-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+        });
+      });
+    }
+
+    // Main initialization
+    function init() {
+      initTailwind();
+      loadCart();
+      updateCartCount();
+
+      // Render menu initially (all items)
+      renderMenu('all');
+      initMenuTabs();
+
+      // Schedule + Map
+      renderSchedule();
+      // Small delay for DOM + to make sure Leaflet is ready
+      setTimeout(() => {
+        initMap();
+      }, 120);
+
+      initNavScroll();
+      initKeyboard();
+
+      // Nice touch: pre-populate a couple items in cart for demo feel if empty (optional — keep clean)
+      // We will leave it empty on first visit for authenticity.
+
+      // Make sure mobile menu starts closed
+      document.getElementById('mobile-menu').classList.add('hidden');
+
+      // Easter egg / professionalism: console note for other devs viewing source
+      console.log('%c[Cumberland Smash] Beautifully built single-file portfolio site for Lake Cumberland, KY.', 'color:#9F1239; font-size:9px');
+    }
+
+    // Boot everything
+    window.onload = init;
+  </script>
+</body>
+</html>
