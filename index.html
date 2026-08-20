@@ -78,13 +78,67 @@
 
     .menu-item-img {
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      object-position: center 55%;
     }
     .food-card:hover .menu-item-img {
       transform: scale(1.04);
     }
 
-    .lake-bg {
-      background-image: linear-gradient(rgba(17, 24, 39, 0.65), rgba(17, 24, 39, 0.55));
+    .hero-photo {
+      object-fit: cover;
+      object-position: 78% 58%;
+    }
+
+    .hero-veil {
+      background:
+        linear-gradient(90deg,
+          rgba(17, 24, 39, 0.86) 0%,
+          rgba(17, 24, 39, 0.62) 38%,
+          rgba(17, 24, 39, 0.22) 64%,
+          rgba(17, 24, 39, 0.12) 100%),
+        linear-gradient(180deg,
+          rgba(17, 24, 39, 0.28) 0%,
+          transparent 30%,
+          transparent 58%,
+          rgba(17, 24, 39, 0.42) 100%);
+    }
+
+    .hero-cta-primary {
+      background: #9F1239;
+      color: #fff;
+      box-shadow: 0 14px 32px -12px rgba(159, 18, 57, 0.7), 0 4px 10px -4px rgba(0, 0, 0, 0.35);
+    }
+    .hero-cta-primary:hover {
+      background: #7F1D1D;
+    }
+    .hero-cta-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(10px);
+    }
+    .hero-cta-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.85);
+    }
+
+    @media (max-width: 767px) {
+      .hero-photo {
+        object-position: center 42%;
+      }
+      .hero-veil {
+        background:
+          linear-gradient(180deg,
+            rgba(17, 24, 39, 0.38) 0%,
+            rgba(17, 24, 39, 0.58) 28%,
+            rgba(17, 24, 39, 0.42) 52%,
+            rgba(17, 24, 39, 0.18) 78%,
+            rgba(17, 24, 39, 0.35) 100%);
+      }
+      .hero-cta-secondary {
+        background: rgba(17, 24, 39, 0.5);
+        border-color: rgba(255, 255, 255, 0.75);
+      }
     }
 
     .nav-scrolled {
@@ -247,50 +301,61 @@
   </nav>
 
   <!-- HERO -->
-  <header class="relative h-[100dvh] min-h-[620px] flex items-center justify-center bg-[#111827] overflow-hidden">
-    <img src="assets/images/hero-smashburger.jpg" alt="Perfect smashburger with crispy edges and melted cheese on Lake Cumberland" 
-         class="absolute inset-0 w-full h-full object-cover">
-    
-    <div class="lake-bg absolute inset-0"></div>
-    
-    <div class="relative z-10 max-w-5xl mx-auto px-6 text-center pt-8">
-      <div class="inline-flex items-center gap-x-2 bg-white/95 backdrop-blur text-[#9F1239] text-xs font-bold tracking-[1.5px] px-4 h-8 rounded-full mb-6 shadow">
-        WAYNE COUNTY • LAKE CUMBERLAND
-      </div>
-      
-      <h1 class="text-white text-6xl sm:text-7xl md:text-[84px] leading-[0.92] font-black tracking-[-4.5px] mb-4">
-        SMASHBURGERS<br>DONE RIGHT
-      </h1>
-      <p class="text-white/90 text-2xl sm:text-3xl font-medium tracking-tight mb-10">on Lake Cumberland</p>
-      
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="#menu" 
-           class="smash-btn group inline-flex items-center justify-center gap-x-3 bg-white hover:bg-white active:bg-gray-100 text-[#111827] font-semibold text-[17px] px-10 sm:px-12 h-14 rounded-3xl shadow-[0_20px_45px_-12px_rgb(0,0,0,0.35),0_8px_16px_-6px_rgb(0,0,0,0.2)] hover:shadow-[0_25px_60px_-15px_rgb(0,0,0,0.4)] transition-all ring-1 ring-white/70 hover:ring-white/90 hover:-translate-y-px">
-          VIEW THE MENU
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-active:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.75" d="M17 8l4 4m0 0l-4 4m4-4V4" />
-          </svg>
-        </a>
-        <a href="#location" 
-           class="smash-btn inline-flex items-center justify-center gap-x-3 bg-white/10 hover:bg-white/30 border border-white/60 hover:border-white/80 text-white font-semibold text-[17px] px-9 sm:px-10 h-14 rounded-3xl backdrop-blur-md transition-all hover:-translate-y-px">
-          FIND US TODAY
-        </a>
-      </div>
-      
-      <div class="mt-12 flex justify-center">
-        <div class="flex items-center gap-x-8 text-white/70 text-sm">
-          <div class="flex items-center gap-x-2">
-            <span class="font-semibold text-white">★ 4.9</span>
-            <span>on Google</span>
+  <header class="relative h-[calc(100svh-5rem)] min-h-[540px] flex items-center bg-[#111827] overflow-hidden">
+    <picture>
+      <source media="(min-width: 768px)" srcset="assets/images/hero-smashburger.jpg">
+      <img src="assets/images/hero-smashburger-mobile.jpg"
+           alt="A normal-sized smashburger held at a picnic table on a wooden dock at Lake Cumberland, Kentucky"
+           class="hero-photo absolute inset-0 w-full h-full">
+    </picture>
+
+    <div class="hero-veil absolute inset-0"></div>
+
+    <div class="relative z-10 w-full">
+      <div class="hero-inner max-w-7xl mx-auto px-5 sm:px-8 pt-8 pb-28 sm:py-16 md:py-20">
+        <div class="max-w-xl lg:max-w-[38rem]">
+          <div class="inline-flex items-center gap-x-2 bg-white/95 backdrop-blur text-[#9F1239] text-[11px] font-bold tracking-[1.6px] px-4 h-8 rounded-full mb-6 shadow-sm">
+            WAYNE COUNTY • LAKE CUMBERLAND
           </div>
-          <div class="h-3 w-px bg-white/30"></div>
-          <div>Est. 2022 • Wayne County Proud</div>
+
+          <h1 class="section-header text-white text-[40px] sm:text-6xl md:text-7xl lg:text-[82px] leading-[0.92] tracking-[-0.03em] mb-2 sm:mb-3">
+            Smashburgers<br>Done Right
+          </h1>
+          <p class="text-[#F59E0B] text-[19px] sm:text-2xl md:text-[28px] font-medium tracking-tight mb-3 sm:mb-5">
+            on Lake Cumberland
+          </p>
+          <p class="hidden sm:block text-white/85 text-[14.5px] sm:text-[16.5px] leading-relaxed max-w-md mb-5 sm:mb-8">
+            Crispy-edge smashburgers, smashed to order at the ramps, docks, and parks around Wayne County.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4">
+            <a href="#menu"
+               class="smash-btn hero-cta-primary group inline-flex items-center justify-center gap-x-3 font-semibold text-[15px] sm:text-[16px] tracking-[0.4px] px-9 sm:px-11 h-12 sm:h-14 rounded-3xl transition-all hover:-translate-y-px active:bg-[#651428]">
+              VIEW THE MENU
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+            <a href="#location"
+               class="smash-btn hero-cta-secondary inline-flex items-center justify-center gap-x-3 font-semibold text-[15px] sm:text-[16px] tracking-[0.4px] px-8 sm:px-10 h-12 sm:h-14 rounded-3xl transition-all hover:-translate-y-px">
+              FIND US TODAY
+            </a>
+          </div>
+
+          <div class="mt-5 sm:mt-10 hidden sm:flex flex-wrap items-center gap-x-6 gap-y-2 text-white/70 text-sm">
+            <div class="flex items-center gap-x-2">
+              <span class="font-semibold text-white">★ 4.9</span>
+              <span>on Google</span>
+            </div>
+            <div class="hidden sm:block h-3 w-px bg-white/30"></div>
+            <div>Est. 2022 • Wayne County Proud</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center text-white/60 text-xs tracking-widest">
-      SCROLL TO EXPLORE <span class="text-lg leading-none mt-1">↓</span>
+    <div class="absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center text-white/55 text-[11px] tracking-[0.22em]">
+      SCROLL TO EXPLORE <span class="text-base leading-none mt-1 tracking-normal">↓</span>
     </div>
   </header>
 
